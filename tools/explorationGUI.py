@@ -104,10 +104,10 @@ class ExplorationGUI(threading.Thread) :
 
   def getKeyboard(self, e):
     if e.type == pygame.KEYDOWN:
-      if (e.key == pygame.K_PLUS) | (e.key == pygame.K_KP_PLUS):
+      if (e.key == pygame.K_PLUS) | (e.key == pygame.K_KP_PLUS) | e.key == pygame.K_UP:
          self.occupancyMap.zoom(-0.001)
          self.center()
-      elif (e.key == pygame.K_MINUS) | (e.key == pygame.K_KP_MINUS):
+      elif (e.key == pygame.K_MINUS) | (e.key == pygame.K_KP_MINUS)| e.key == pygame.K_DOWN:
           self.occupancyMap.zoom(0.001)
           self.center()
       elif e.key == pygame.K_c:
