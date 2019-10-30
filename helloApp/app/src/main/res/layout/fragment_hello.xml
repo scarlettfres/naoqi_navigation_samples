@@ -5,38 +5,53 @@ xmlns:tools="http://schemas.android.com/tools"
 android:layout_width="match_parent"
 android:layout_height="fill_parent">
 
-<TextView
-    android:id="@+id/hello"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="15dp"
-    android:gravity="center"
-    android:text="@string/HelloFragment"
-    android:textColor="@color/black"
-    android:textSize="40sp"
-    android:textStyle="bold"
-    app:layout_constraintEnd_toEndOf="parent"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent" />
+    <TextView
+        android:id="@+id/hello"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="15dp"
+        android:gravity="center"
+        android:text="@string/HelloFragment"
+        android:textColor="@color/black"
+        android:textSize="40sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
 
-<Button
-    android:id="@+id/back_button"
-    android:layout_width="55dp"
-    android:layout_height="55dp"
-    android:layout_marginStart="64dp"
-    android:layout_marginTop="15dp"
-    android:layout_marginBottom="8dp"
-    android:background="@drawable/ic_btn_back"
-    android:gravity="fill"
-    android:includeFontPadding="false"
-    android:paddingStart="0dp"
-    android:paddingTop="0dp"
-    android:paddingBottom="0dp"
-    android:textAlignment="center"
-    android:textAllCaps="false"
-    android:textSize="60sp"
-    android:textStyle="bold"
-    app:layout_constraintStart_toStartOf="parent"
-    app:layout_constraintTop_toTopOf="parent" />
+    <Button
+        android:id="@+id/back_button"
+        android:layout_width="55dp"
+        android:layout_height="55dp"
+        android:layout_marginStart="64dp"
+        android:layout_marginTop="15dp"
+        android:layout_marginBottom="8dp"
+        android:background="@drawable/ic_btn_back"
+        android:gravity="fill"
+        android:includeFontPadding="false"
+        android:paddingStart="0dp"
+        android:paddingTop="0dp"
+        android:paddingBottom="0dp"
+        android:textAlignment="center"
+        android:textAllCaps="false"
+        android:textSize="60sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+
+    <ImageView
+        android:id="@+id/hello_image"
+        android:layout_width="406dp"
+        android:layout_height="301dp"
+        android:layout_marginTop="62dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/hello"
+        app:layout_constraintVertical_bias="0.515"
+        app:srcCompat="@mipmap/ic_launcher2_foreground" />
+
 
 </android.support.constraint.ConstraintLayout>

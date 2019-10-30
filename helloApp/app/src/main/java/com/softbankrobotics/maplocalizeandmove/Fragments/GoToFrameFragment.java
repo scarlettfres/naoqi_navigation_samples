@@ -4,6 +4,8 @@ import android.app.ActionBar;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -22,9 +24,12 @@ import com.softbankrobotics.maplocalizeandmove.MainActivity;
 import com.softbankrobotics.maplocalizeandmove.R;
 import com.softbankrobotics.maplocalizeandmove.Utils.Popup;
 
+import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+
+import static android.support.constraint.Constraints.TAG;
 
 public class GoToFrameFragment extends android.support.v4.app.Fragment {
 
@@ -36,6 +41,7 @@ public class GoToFrameFragment extends android.support.v4.app.Fragment {
     public TextView goto_text;
     public ImageView cross;
     public LottieAnimationView goto_loader;
+    Bitmap pictureBitmap;
 
 
     /**
@@ -68,16 +74,17 @@ public class GoToFrameFragment extends android.support.v4.app.Fragment {
         view.findViewById(R.id.back_button).setOnClickListener((v) ->
                 ma.setFragment(new ProductionFragment(), true));
 
+        ma.robotHelper.releaseAbilities();
         displayLocations();
     }
 
     public void createGoToPopup() {
         goToPopup = new Popup(R.layout.popup_goto, this, ma);
-
         goto_loader = goToPopup.inflator.findViewById(R.id.goto_loader);
         check = goToPopup.inflator.findViewById(R.id.check);
         goto_text = goToPopup.inflator.findViewById(R.id.goto_text);
         cross = goToPopup.inflator.findViewById(R.id.cross);
+        cross.setImageBitmap(pictureBitmap);
         Button close_button = goToPopup.inflator.findViewById(R.id.close_button);
         close_button.setOnClickListener((v) -> {
             goToPopup.dialog.hide();
@@ -145,6 +152,25 @@ public class GoToFrameFragment extends android.support.v4.app.Fragment {
             ma.setFragment(new MainFragment(),true);
         });
         noLocationsPopup.dialog.show();
+    }
+
+    public void setPicture(ByteBuffer data)
+    {
+        data.rewind();
+        final int pictureBufferSize = data.remaining();
+        final byte[] pictureArray = new byte[pictureBufferSize];
+        data.get(pictureArray);
+        Log.i(TAG, "PICTURE RECEIVED! (" + pictureBufferSize + " Bytes)");
+        // display picture
+        pictureBitmap = BitmapFactory.decodeByteArray(pictureArray, 0, pictureBufferSize);
+        ImageView imageView =  (ImageView)localView.findViewById(R.id.userPicture);
+        ma.runOnUiThread(()-> imageView.setImageBitmap(pictureBitmap));
+    }
+
+    public void removePicture()
+    {
+        ImageView imageView =  (ImageView)localView.findViewById(R.id.userPicture);
+        ma.runOnUiThread(()-> imageView.setVisibility(View.INVISIBLE));
     }
 
 }

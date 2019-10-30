@@ -1,5 +1,6 @@
 package com.softbankrobotics.maplocalizeandmove.Utils;
 
+import android.support.v4.math.MathUtils;
 import android.util.Log;
 
 import com.aldebaran.qi.Future;
@@ -12,27 +13,29 @@ import com.aldebaran.qi.sdk.object.actuation.Frame;
 import com.aldebaran.qi.sdk.object.geometry.Quaternion;
 import com.aldebaran.qi.sdk.object.geometry.Transform;
 import com.aldebaran.qi.sdk.object.geometry.Vector3;
+import com.aldebaran.qi.sdk.util.FutureUtils;
 
 import static java.lang.Math.atan2;
 public class NavUtils {
     /**
      * Gets the "yaw" (or "theta") angle from a quaternion (the only angle relevant for navigation)
      */
-    static double getYawFromQuaternion(Quaternion q) {
-        // yaw (z-axis rotation)
-        double x = q.getX();
-        double y = q.getY();
-        double z = q.getZ();
-        double w = q.getW();
-        double sinYaw = 2.0 * (w * z + x * y);
-        double cosYaw = 1.0 - 2.0 * (y * y + z * z);
-        return atan2(sinYaw, cosYaw);
+    static double getYawFromQuaternion(Quaternion quaternion) {
+
+         return Math.atan2(2.0f*(quaternion.getX() * quaternion.getY() - quaternion.getZ()*quaternion.getW()) ,
+                1.0f - 2.0f*(Math.pow(quaternion.getY(), 2) + Math.pow(quaternion.getZ(), 2)));
     }
     /**
      * Tries to directly go to given pos and angle, in straight line. Returns a future.
      */
     static Future<Void> goStraightToPos(QiContext qiContext, double x, double y, double theta) {
-        String animationString = String.format("[\"Holonomic\", [\"Line\", [%f, %f]], %f, 1.0]", x, y, theta);
+
+        double timeMax = 3.0f;
+        double angleMax = Math.PI;
+        double duration = theta/angleMax * timeMax;
+
+
+        String animationString = String.format("[\"Holonomic\", [\"Line\", [%f, %f]], %f, %f]", x, y, theta, duration);
         Animation animation = AnimationBuilder.with(qiContext).withTexts(animationString).build();
         Animate animate = AnimateBuilder.with(qiContext).withAnimation(animation).build();
         return animate.async().run();}
@@ -53,8 +56,12 @@ public class NavUtils {
         Transform deltaTransform = frame.computeTransform(qiContext.getActuation().robotFrame()).getTransform();
         double dx = deltaTransform.getTranslation().getX();
         double dy = deltaTransform.getTranslation().getY();
-        double angle = atan2(dy, dx);
-        return goStraightToPos(qiContext, 0, 0, angle);
+        if (dx < 0.1f && dy < 0.3f) {
+            double angle = atan2(dy, dx);
+            Log.d("NAVUTILS", "alignWithTarget: " + angle);
+            return goStraightToPos(qiContext, 0, 0, angle);
+        }
+        return Future.of(null);
     }
 
 
@@ -64,6 +71,7 @@ public class NavUtils {
         Transform deltaTransform = frame.computeTransform(qiContext.getActuation().robotFrame()).getTransform();
         Quaternion quaternion = deltaTransform.getRotation();
         double theta = getYawFromQuaternion(quaternion);
+        Log.d("NAVUTILS", "alignWithFRAME: " + theta);
         return goStraightToPos(qiContext, 0, 0, theta);
 
     }

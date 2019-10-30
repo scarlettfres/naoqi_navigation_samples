@@ -5,11 +5,15 @@ import android.util.Log;
 import com.aldebaran.qi.Future;
 import com.aldebaran.qi.sdk.QiContext;
 import com.aldebaran.qi.sdk.builder.GoToBuilder;
+import com.aldebaran.qi.sdk.builder.TakePictureBuilder;
 import com.aldebaran.qi.sdk.object.actuation.AttachedFrame;
 import com.aldebaran.qi.sdk.object.actuation.Frame;
 import com.aldebaran.qi.sdk.object.actuation.GoTo;
+import com.aldebaran.qi.sdk.object.camera.TakePicture;
+import com.aldebaran.qi.sdk.object.image.TimestampedImageHandle;
 import com.aldebaran.qi.sdk.util.FutureUtils;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -59,22 +63,6 @@ public class GoToHelper {
         qiContext = null;
     }
 
-    /**
-     * Call this function for the robot to go back home.
-     * This requires the robot to be localized.
-     * The robot will try up to 5 times to reach the destination.
-     * @return Future of the GoTo
-     */
-    public Future<Void> goToMapFrame() {
-        // Helper not to have to find the mapFrame yourself
-        return qiContext.getMapping()
-                .async()
-                // ...get the mapFrame
-                .mapFrame()
-                // ...and go to it!
-                .andThenCompose(frame -> goTo(frame));
-    }
-
 
     /**
      * Call this function for the robot to go to the provided AttachedFrame.
@@ -92,6 +80,16 @@ public class GoToHelper {
                 // ...and go to it.
                 .andThenCompose(frame -> goTo(frame));
     }
+
+
+    public Future<TimestampedImageHandle> takePicture() {
+        Future<TakePicture> takePictureFuture = TakePictureBuilder.with(qiContext).buildAsync();
+        return takePictureFuture.andThenCompose(takePicture -> {
+        Log.i(TAG, "take picture launched!");
+        return takePicture.async().run();
+    });
+    }
+
 
     /**
      * Call this function for the robot to go to the provided Frame.
@@ -146,7 +144,7 @@ public class GoToHelper {
 
                     } else if (goToResult.hasError() && tryCounter > 0) {
                         tryCounter--;
-                        Log.d(TAG, "Move ended with error: ", goToResult.getError());
+                        Log.d(TAG, "Move ended with error: " + goToResult.getError());
                         Log.d(TAG, "Retrying " + tryCounter + " times.");
                         return FutureUtils.wait((long) 1500, TimeUnit.MILLISECONDS)
                                 .thenCompose(aUselessVoid -> tryGoTo(goTo));
@@ -157,6 +155,8 @@ public class GoToHelper {
                     }
                 });
     }
+
+
 
     /**
      * Little helper for the UI to subscribe to the current state of GoTo

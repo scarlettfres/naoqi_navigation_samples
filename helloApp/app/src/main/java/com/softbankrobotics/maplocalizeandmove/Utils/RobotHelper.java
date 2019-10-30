@@ -2,6 +2,8 @@ package com.softbankrobotics.maplocalizeandmove.Utils;
 
 import com.aldebaran.qi.Future;
 import com.aldebaran.qi.sdk.QiContext;
+import com.aldebaran.qi.sdk.builder.AnimateBuilder;
+import com.aldebaran.qi.sdk.builder.AnimationBuilder;
 import com.aldebaran.qi.sdk.builder.HolderBuilder;
 import com.aldebaran.qi.sdk.object.actuation.Actuation;
 import com.aldebaran.qi.sdk.object.actuation.AttachedFrame;
@@ -11,6 +13,7 @@ import com.aldebaran.qi.sdk.object.geometry.TransformTime;
 import com.aldebaran.qi.sdk.object.holder.AutonomousAbilitiesType;
 import com.aldebaran.qi.sdk.object.holder.Holder;
 import com.aldebaran.qi.sdk.object.humanawareness.HumanAwareness;
+import com.softbankrobotics.maplocalizeandmove.R;
 
 public class RobotHelper {
     private static final String TAG = "MSI_RobotHelper";
@@ -86,5 +89,14 @@ public class RobotHelper {
                     // Create an AttachedFrame representing the current robot frame relatively to the MapFrame
                     return mapFrame.makeAttachedFrame(transformTime.getTransform());
                 });
+    }
+
+        public Future<Void> animationTosearchPeople() {
+        return AnimationBuilder.with(qiContext) // Create the builder with the context.
+                .withResources(R.raw.cautious_a001) // Set the animation resource.
+                .buildAsync().andThenCompose(animation -> { return AnimateBuilder.with(qiContext)
+                        .withAnimation(animation)
+                        .buildAsync().andThenCompose(animate -> animate.async().run());});
+
     }
  }

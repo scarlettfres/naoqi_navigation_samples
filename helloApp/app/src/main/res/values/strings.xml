@@ -22,6 +22,7 @@
     <!-- fragment_hello -->
     <string name="HelloFragment">Is there someone here?</string>
     <string name="peopleDetected">Hello people!</string>
+    <string name="noone">No one is here </string>
 
 
     <!-- fragment_map_localize_and_move -->

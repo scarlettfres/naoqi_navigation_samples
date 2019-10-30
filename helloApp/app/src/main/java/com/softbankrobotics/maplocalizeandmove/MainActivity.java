@@ -1,12 +1,15 @@
 package com.softbankrobotics.maplocalizeandmove;
 
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 
 import com.aldebaran.qi.Future;
 import com.aldebaran.qi.sdk.QiContext;
@@ -26,6 +29,7 @@ import com.aldebaran.qi.sdk.object.actuation.LookAt;
 import com.aldebaran.qi.sdk.object.conversation.BodyLanguageOption;
 import com.aldebaran.qi.sdk.object.conversation.Say;
 import com.aldebaran.qi.sdk.object.geometry.Transform;
+import com.aldebaran.qi.sdk.object.image.TimestampedImageHandle;
 import com.aldebaran.qi.sdk.object.locale.Language;
 import com.aldebaran.qi.sdk.object.locale.Locale;
 import com.aldebaran.qi.sdk.object.locale.Region;
@@ -45,6 +49,7 @@ import com.softbankrobotics.maplocalizeandmove.Utils.Vector2;
 
 import java.io.File;
 import java.io.Serializable;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.Executor;
@@ -65,7 +70,7 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
     private SaveFileHelper saveFileHelper;
     private FragmentManager fragmentManager;
     private HelloFragment helloFragment;
-
+    public ByteBuffer pictureData;
     private Animate animate;
     private QiContext qiContext;
     private String currentFragment;
@@ -174,11 +179,14 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
         return fragmentManager.findFragmentByTag("currentFragment");
     }
 
+
     public void goToLocation(final String location) {
         say("Let's go to "+location+"!!");
+        helloFragment.setPeopleName(location);
         GoToFrameFragment goToFrameFragment = (GoToFrameFragment) getFragment();
         goToFrameFragment.createGoToPopup();
         robotHelper.goToHelper.addOnStartedMovingListener(() -> runOnUiThread(() -> {
+            robotHelper.holdAbilities();
             goToFrameFragment.goToPopup.dialog.show();
             goToFrameFragment.goToPopup.dialog.getWindow().setAttributes(goToFrameFragment.goToPopup.lp);
         }));
@@ -188,10 +196,8 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
             runOnUiThread(() -> {
                 goToFrameFragment.goto_loader.setVisibility(View.GONE);
                 if (success) {
-                    helloFragment.setPeopleName("");
                     setFragment(helloFragment, true);
-                    } else {
-                    helloFragment.setPeopleName(location);
+                } else {
                     goToFrameFragment.cross.setVisibility(View.VISIBLE);
                 }
             });
@@ -207,17 +213,35 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
             });
 
         });
-        if (location.equalsIgnoreCase("mapFrame")) {
-            robotHelper.goToHelper.goToMapFrame().andThenConsume(fut -> {
-                Log.d(TAG, "end of go to succeeded");
-            });
-        } else {
-            robotHelper.goToHelper.goTo(savedLocations.get(location)).andThenConsume(fut -> {
-                        Log.d(TAG, "end of go to succeeded");
-                    }
 
-            );
-        }
+        Future<TimestampedImageHandle> imageFuture = robotHelper.goToHelper.takePicture();
+        imageFuture.andThenConsume(fut -> {
+            pictureData = fut.getImage().getValue().getData();
+            goToFrameFragment.setPicture(fut.getImage().getValue().getData());
+            Log.d(TAG, "ok setpictures");
+
+            if (location.equalsIgnoreCase("mapFrame")) {
+                          Log.d(TAG, "end of go to succeeded");
+                          qiContext.getMapping()
+                                    .async()
+                                    // ...get the mapFrame
+                                    .mapFrame()
+                                    // ...and go to it!
+                                    .andThenCompose(frame ->  robotHelper.goToHelper.goTo(frame)).andThenConsume(futGoto ->
+                                    Log.d(TAG, "end of go to map succeeded"));
+            } else {
+                robotHelper.goToHelper.goTo(savedLocations.get(location)).thenConsume(futGoto -> {
+                            Log.d(TAG, "end of go to succeeded");
+                            if (futGoto.hasError()) {
+                                Log.d(TAG, "ERROR GOTO: " + futGoto.getErrorMessage());
+                                TextView textView = goToFrameFragment.goToPopup.inflator.findViewById(R.id.goto_text);
+                                runOnUiThread(() -> textView.setText("ERROR GOTO: " + futGoto.getErrorMessage()));
+                            }
+                        }
+
+                );
+            }
+        });
     }
 
 
@@ -229,8 +253,8 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
     }
 
     public Future<Boolean> loadLocations() {
-
-        return FutureUtils.futureOf((f) -> {
+        return robotHelper.releaseAbilities().andThenCompose(aVoid -> {
+            return FutureUtils.futureOf((f) -> {
             // Read file into a temporary hashmap
             File file = new File(getFilesDir(), "hashmap.ser");
             if (file.exists()) {
@@ -261,7 +285,7 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
             } else {
                 throw new Exception("No file");
             }
-        });
+        });});
     }
 
     public void backupLocations() {
@@ -377,9 +401,8 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
                     robotHelper.localizeAndMapHelper.setMap(map);
                     robotHelper.holdAbilities().andThenConsume((useless) -> robotHelper.localizeAndMapHelper.localize());
                 }
-
             } else
-                robotHelper.holdAbilities().andThenConsume((useless) -> robotHelper.localizeAndMapHelper.localize());
+                robotHelper.holdAbilities().andThenCompose((useless) -> robotHelper.localizeAndMapHelper.localize());
         });
     }
 
@@ -399,5 +422,7 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
             return say.async().run();
         });
     }
+
+
 }
 

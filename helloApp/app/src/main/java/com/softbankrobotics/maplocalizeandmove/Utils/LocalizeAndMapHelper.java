@@ -4,12 +4,15 @@ import android.util.Log;
 
 import com.aldebaran.qi.Future;
 import com.aldebaran.qi.sdk.QiContext;
+import com.aldebaran.qi.sdk.builder.AnimateBuilder;
+import com.aldebaran.qi.sdk.builder.AnimationBuilder;
 import com.aldebaran.qi.sdk.builder.ExplorationMapBuilder;
 import com.aldebaran.qi.sdk.builder.LocalizeAndMapBuilder;
 import com.aldebaran.qi.sdk.builder.LocalizeBuilder;
 import com.aldebaran.qi.sdk.object.actuation.ExplorationMap;
 import com.aldebaran.qi.sdk.object.actuation.Localize;
 import com.aldebaran.qi.sdk.object.actuation.LocalizeAndMap;
+import com.softbankrobotics.maplocalizeandmove.R;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -117,10 +120,12 @@ public class LocalizeAndMapHelper {
 
         return checkAndCancelCurrentLocalize()
                 .thenApply(aUselessFuture -> {
+
                     if(builtLocalize != null) {
                         return builtLocalize;
                     } else {
                         try {
+
                             ExplorationMap explorationMap = ExplorationMapBuilder.with(qiContext).withMapString(currentExplorationMap).build();
                             builtLocalize = LocalizeBuilder.with(qiContext).withMap(explorationMap).build();
                             builtLocalize.addOnStatusChangedListener(status -> checkStatusAndRaiseLocalized(status));
@@ -219,7 +224,17 @@ public class LocalizeAndMapHelper {
         if (status == com.aldebaran.qi.sdk.object.actuation.LocalizationStatus.LOCALIZED) {
             Log.d(TAG, "Robot is localized");
             raiseFinishedLocalizing(LocalizationStatus.LOCALIZED);
+            animationToLookInFront();
         }
+    }
+
+    public Future<Void> animationToLookInFront() {
+        return AnimationBuilder.with(qiContext) // Create the builder with the context.
+                .withResources(R.raw.chill_a001) // Set the animation resource.
+                .buildAsync().andThenCompose(animation -> { return AnimateBuilder.with(qiContext)
+                        .withAnimation(animation)
+                        .buildAsync().andThenCompose(animate -> animate.async().run());});
+
     }
 
     /**
