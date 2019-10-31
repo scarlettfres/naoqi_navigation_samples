@@ -195,7 +195,6 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
             runOnUiThread(() -> {
                 goToFrameFragment.goto_loader.setVisibility(View.GONE);
                 if (success) {
-
                     setFragment(helloFragment, true);
                 } else {
                     goToFrameFragment.cross.setVisibility(View.VISIBLE);

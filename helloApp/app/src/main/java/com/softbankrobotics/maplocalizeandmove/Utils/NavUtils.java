@@ -21,11 +21,17 @@ public class NavUtils {
     /**
      * Gets the "yaw" (or "theta") angle from a quaternion (the only angle relevant for navigation)
      */
-    static double getYawFromQuaternion(Quaternion quaternion) {
-
-         return Math.atan2(2.0f*(quaternion.getX() * quaternion.getY() - quaternion.getZ()*quaternion.getW()) ,
-                1.0f - 2.0f*(Math.pow(quaternion.getY(), 2) + Math.pow(quaternion.getZ(), 2)));
+    static double getYawFromQuaternion(Quaternion q) {
+        // yaw (z-axis rotation)
+        double x = q.getX();
+        double y = q.getY();
+        double z = q.getZ();
+        double w = q.getW();
+        double sinYaw = 2.0 * (w * z + x * y);
+        double cosYaw = 1.0 - 2.0 * (y * y + z * z);
+        return atan2(sinYaw, cosYaw);
     }
+    
     /**
      * Tries to directly go to given pos and angle, in straight line. Returns a future.
      */
