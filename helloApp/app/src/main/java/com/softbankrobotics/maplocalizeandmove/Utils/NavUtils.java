@@ -15,6 +15,7 @@ import com.aldebaran.qi.sdk.object.geometry.Transform;
 import com.aldebaran.qi.sdk.object.geometry.Vector3;
 import com.aldebaran.qi.sdk.util.FutureUtils;
 
+import static java.lang.Math.abs;
 import static java.lang.Math.atan2;
 public class NavUtils {
     /**
@@ -29,13 +30,17 @@ public class NavUtils {
      * Tries to directly go to given pos and angle, in straight line. Returns a future.
      */
     static Future<Void> goStraightToPos(QiContext qiContext, double x, double y, double theta) {
-
-        double timeMax = 3.0f;
+        double timeMax = 5.0f;
         double angleMax = Math.PI;
-        double duration = theta/angleMax * timeMax;
-
-
+        double duration = abs(theta)/angleMax * timeMax;
+        Log.d("NAVUTILS", "goStraightToPos: " + duration);
         String animationString = String.format("[\"Holonomic\", [\"Line\", [%f, %f]], %f, %f]", x, y, theta, duration);
+        Animation animation = AnimationBuilder.with(qiContext).withTexts(animationString).build();
+        Animate animate = AnimateBuilder.with(qiContext).withAnimation(animation).build();
+        return animate.async().run();}
+
+    static Future<Void> stayAtPoseFor(QiContext qiContext, double time) {
+        String animationString = String.format("[\"Holonomic\", [\"Line\", [0.0, 0.0]], 0.0, %f]", time);
         Animation animation = AnimationBuilder.with(qiContext).withTexts(animationString).build();
         Animate animate = AnimateBuilder.with(qiContext).withAnimation(animation).build();
         return animate.async().run();}
@@ -49,10 +54,8 @@ public class NavUtils {
      * Turn to align with a given frame. Returns a future.
      */
 
-
     // align with the angle of the frame.
     public static Future<Void> alignWithTarget(QiContext qiContext, Frame frame) {
-        Log.d("NAVUTILS", "alignWithTarget: ");
         Transform deltaTransform = frame.computeTransform(qiContext.getActuation().robotFrame()).getTransform();
         double dx = deltaTransform.getTranslation().getX();
         double dy = deltaTransform.getTranslation().getY();
@@ -67,11 +70,25 @@ public class NavUtils {
 
     // look at target frame.
     public static Future<Void> alignWithFrame(QiContext qiContext, Frame frame) {
-        Log.d("NAVUTILS", "alignWithFrame: ");
         Transform deltaTransform = frame.computeTransform(qiContext.getActuation().robotFrame()).getTransform();
+
+        Transform inMapTransf = frame.computeTransform(qiContext.getMapping().mapFrame()).getTransform();
+
         Quaternion quaternion = deltaTransform.getRotation();
         double theta = getYawFromQuaternion(quaternion);
-        Log.d("NAVUTILS", "alignWithFRAME: " + theta);
+
+        Quaternion quaternionInMAp = inMapTransf.getRotation();
+        double thetaInMap = getYawFromQuaternion(quaternionInMAp);
+
+
+        Log.d("NAVUTILS", "frame in map: x = " + inMapTransf.getTranslation().getX() +
+                "y =" + inMapTransf.getTranslation().getY() + "theta = " + thetaInMap);
+        Log.d("NAVUTILS", "Quat in map: w = " + inMapTransf.getRotation().getW() + "x =" +
+                inMapTransf.getRotation().getX() + "y = " +  inMapTransf.getRotation().getY() +
+                "z =" +  inMapTransf.getRotation().getZ());
+        Log.d("NAVUTILS", "frame in Robot: x = " + deltaTransform.getTranslation().getX()
+                + "y =" + deltaTransform.getTranslation().getY() + "theta = " + theta);
+
         return goStraightToPos(qiContext, 0, 0, theta);
 
     }

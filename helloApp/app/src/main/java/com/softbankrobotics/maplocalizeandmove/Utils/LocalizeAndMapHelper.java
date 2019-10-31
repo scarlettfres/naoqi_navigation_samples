@@ -230,7 +230,7 @@ public class LocalizeAndMapHelper {
 
     public Future<Void> animationToLookInFront() {
         return AnimationBuilder.with(qiContext) // Create the builder with the context.
-                .withResources(R.raw.chill_a001) // Set the animation resource.
+                .withResources(R.raw.idle) // Set the animation resource.
                 .buildAsync().andThenCompose(animation -> { return AnimateBuilder.with(qiContext)
                         .withAnimation(animation)
                         .buildAsync().andThenCompose(animate -> animate.async().run());});

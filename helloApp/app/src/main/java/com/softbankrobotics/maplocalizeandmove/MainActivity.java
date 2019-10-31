@@ -40,12 +40,11 @@ import com.softbankrobotics.maplocalizeandmove.Fragments.LoadingFragment;
 import com.softbankrobotics.maplocalizeandmove.Fragments.LocalizeAndMapFragment;
 import com.softbankrobotics.maplocalizeandmove.Fragments.MainFragment;
 import com.softbankrobotics.maplocalizeandmove.Fragments.SaveLocationsFragment;
-import com.softbankrobotics.maplocalizeandmove.Fragments.SetupFragment;
 import com.softbankrobotics.maplocalizeandmove.Fragments.SplashFragment;
 import com.softbankrobotics.maplocalizeandmove.Utils.LocalizeAndMapHelper;
 import com.softbankrobotics.maplocalizeandmove.Utils.RobotHelper;
 import com.softbankrobotics.maplocalizeandmove.Utils.SaveFileHelper;
-import com.softbankrobotics.maplocalizeandmove.Utils.Vector2;
+import com.softbankrobotics.maplocalizeandmove.Utils.vector2Theta;
 
 import java.io.File;
 import java.io.Serializable;
@@ -196,6 +195,7 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
             runOnUiThread(() -> {
                 goToFrameFragment.goto_loader.setVisibility(View.GONE);
                 if (success) {
+
                     setFragment(helloFragment, true);
                 } else {
                     goToFrameFragment.cross.setVisibility(View.VISIBLE);
@@ -211,7 +211,6 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
             goToFrameFragment.goToPopup.dialog.setOnDismissListener(arg0 -> {
                 futureUtils.cancel(true);
             });
-
         });
 
         Future<TimestampedImageHandle> imageFuture = robotHelper.goToHelper.takePicture();
@@ -259,14 +258,14 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
             File file = new File(getFilesDir(), "hashmap.ser");
             if (file.exists()) {
 
-                Map<String, Vector2> vectors = saveFileHelper.getLocationsFromFile(getApplicationContext());
+                Map<String, vector2Theta> vectors = saveFileHelper.getLocationsFromFile(getApplicationContext());
 
                 // Clear current savedLocations
                 savedLocations = new HashMap<>();
                 Frame mapFrame = robotHelper.getMapFrame();
 
                 // Build frames from the vectors
-                for (Map.Entry<String, Vector2> entry : vectors.entrySet()) {
+                for (Map.Entry<String, vector2Theta> entry : vectors.entrySet()) {
                     // Create a transform from the vector2
                     Transform t = entry.getValue().createTransform();
                     Log.d(TAG, "loadLocations: " + entry.getKey());
@@ -292,7 +291,7 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
         Executor executor = Executors.newSingleThreadExecutor();
         executor.execute(() -> {
 
-            Map<String, Vector2> locationsToBackup = new HashMap<>();
+            Map<String, vector2Theta> locationsToBackup = new HashMap<>();
             Frame mapFrame = robotHelper.getMapFrame();
 
             for (Map.Entry<String, AttachedFrame> entry : savedLocations.entrySet()) {
@@ -301,7 +300,7 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
                 Frame frame = destination.async().frame().getValue();
 
                 // create a serializable vector2
-                Vector2 vector = Vector2.betweenFrames(mapFrame, frame);
+                vector2Theta vector = vector2Theta.betweenFrames(frame, mapFrame);
 
                 // add to backup list
                 locationsToBackup.put(entry.getKey(), vector);

@@ -110,7 +110,9 @@ public class GoToHelper {
             return GoToBuilder.with(qiContext)
             .withFrame(frame)
             .buildAsync()
-            .andThenCompose(goTo -> tryGoTo(goTo)).andThenCompose(gotoFut -> NavUtils.alignWithFrame(qiContext, frame));
+            .andThenCompose(goTo -> tryGoTo(goTo)).andThenCompose(
+            gotoFut -> NavUtils.alignWithFrame(qiContext, frame)).andThenCompose(
+                            alignFut-> NavUtils.stayAtPoseFor(qiContext, 10));
         });
     }
 

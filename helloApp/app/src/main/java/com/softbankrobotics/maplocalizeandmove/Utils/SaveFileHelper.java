@@ -21,8 +21,8 @@ public class SaveFileHelper {
 
     private static String TAG = "MSI_SaveFileHelper";
 
-    public Map<String, Vector2> getLocationsFromFile(Context applicationContext) {
-        Map<String, Vector2> vectors = null;
+    public Map<String, vector2Theta> getLocationsFromFile(Context applicationContext) {
+        Map<String, vector2Theta> vectors = null;
         FileInputStream fis = null;
         ObjectInputStream ois = null;
         try {
@@ -48,7 +48,7 @@ public class SaveFileHelper {
         return vectors;
     }
 
-    public void saveLocationsToFile(Context applicationContext, Map<String, Vector2> locationsToBackup) {
+    public void saveLocationsToFile(Context applicationContext, Map<String, vector2Theta> locationsToBackup) {
         FileOutputStream fos = null;
         ObjectOutputStream oos = null;
 
