@@ -84,7 +84,6 @@ public class GoToFrameFragment extends android.support.v4.app.Fragment {
         check = goToPopup.inflator.findViewById(R.id.check);
         goto_text = goToPopup.inflator.findViewById(R.id.goto_text);
         cross = goToPopup.inflator.findViewById(R.id.cross);
-        cross.setImageBitmap(pictureBitmap);
         Button close_button = goToPopup.inflator.findViewById(R.id.close_button);
         close_button.setOnClickListener((v) -> {
             goToPopup.dialog.hide();

@@ -105,15 +105,17 @@ public class GoToHelper {
         // Build the GoTo
         Log.d(TAG, "goTo  frame before");
 
-        return NavUtils.alignWithTarget(qiContext, frame).thenCompose(unusued -> {
+        Future<Void> toRet =  NavUtils.alignWithTarget(qiContext, frame).thenCompose(unusued -> {
             Log.d(TAG, "alignWithFrame: " + unusued.getValue());
             return GoToBuilder.with(qiContext)
             .withFrame(frame)
             .buildAsync()
             .andThenCompose(goTo -> tryGoTo(goTo)).andThenCompose(
-            gotoFut -> NavUtils.alignWithFrame(qiContext, frame)).andThenCompose(
-                            alignFut-> NavUtils.stayAtPoseFor(qiContext, 10));
+            gotoFut -> NavUtils.alignWithFrame(qiContext, frame));
         });
+        toRet.andThenConsume(
+                alignFut-> NavUtils.stayAtPoseFor(qiContext, 10));
+        return toRet;
     }
 
     /**

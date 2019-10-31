@@ -195,7 +195,6 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
             runOnUiThread(() -> {
                 goToFrameFragment.goto_loader.setVisibility(View.GONE);
                 if (success) {
-                    setFragment(helloFragment, true);
                 } else {
                     goToFrameFragment.cross.setVisibility(View.VISIBLE);
                 }
@@ -213,14 +212,14 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
         });
 
         Future<TimestampedImageHandle> imageFuture = robotHelper.goToHelper.takePicture();
-        imageFuture.andThenConsume(fut -> {
+        imageFuture.andThenCompose(fut -> {
             pictureData = fut.getImage().getValue().getData();
             goToFrameFragment.setPicture(fut.getImage().getValue().getData());
             Log.d(TAG, "ok setpictures");
 
             if (location.equalsIgnoreCase("mapFrame")) {
                           Log.d(TAG, "end of go to succeeded");
-                          qiContext.getMapping()
+                          return qiContext.getMapping()
                                     .async()
                                     // ...get the mapFrame
                                     .mapFrame()
@@ -228,18 +227,12 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
                                     .andThenCompose(frame ->  robotHelper.goToHelper.goTo(frame)).andThenConsume(futGoto ->
                                     Log.d(TAG, "end of go to map succeeded"));
             } else {
-                robotHelper.goToHelper.goTo(savedLocations.get(location)).thenConsume(futGoto -> {
+                return robotHelper.goToHelper.goTo(savedLocations.get(location)).andThenConsume(futGoto -> {
                             Log.d(TAG, "end of go to succeeded");
-                            if (futGoto.hasError()) {
-                                Log.d(TAG, "ERROR GOTO: " + futGoto.getErrorMessage());
-                                TextView textView = goToFrameFragment.goToPopup.inflator.findViewById(R.id.goto_text);
-                                runOnUiThread(() -> textView.setText("ERROR GOTO: " + futGoto.getErrorMessage()));
-                            }
                         }
-
                 );
             }
-        });
+        }).andThenConsume(fut ->setFragment(helloFragment, true));
     }
 
 
