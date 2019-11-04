@@ -68,7 +68,6 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
     private AtomicBoolean load_location_success = new AtomicBoolean(false);
     private SaveFileHelper saveFileHelper;
     private FragmentManager fragmentManager;
-    private HelloFragment helloFragment;
     public ByteBuffer pictureData;
     private Animate animate;
     private QiContext qiContext;
@@ -77,7 +76,6 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        helloFragment = new HelloFragment();
         this.fragmentManager = getSupportFragmentManager();
         QiSDK.register(this, this);
         setSpeechBarDisplayStrategy(SpeechBarDisplayStrategy.OVERLAY);
@@ -181,15 +179,12 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
 
     public void goToLocation(final String location) {
         say("Let's go to "+location+"!!");
-        helloFragment.setPeopleName(location);
         GoToFrameFragment goToFrameFragment = (GoToFrameFragment) getFragment();
         goToFrameFragment.createGoToPopup();
         robotHelper.goToHelper.addOnStartedMovingListener(() -> runOnUiThread(() -> {
-            robotHelper.holdAbilities();
             goToFrameFragment.goToPopup.dialog.show();
             goToFrameFragment.goToPopup.dialog.getWindow().setAttributes(goToFrameFragment.goToPopup.lp);
         }));
-
 
         robotHelper.goToHelper.addOnFinishedMovingListener((success) -> {
             runOnUiThread(() -> {
@@ -213,6 +208,7 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
 
         Future<TimestampedImageHandle> imageFuture = robotHelper.goToHelper.takePicture();
         imageFuture.andThenCompose(fut -> {
+            robotHelper.holdAbilities();
             pictureData = fut.getImage().getValue().getData();
             goToFrameFragment.setPicture(fut.getImage().getValue().getData());
             Log.d(TAG, "ok setpictures");
@@ -232,7 +228,15 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
                         }
                 );
             }
-        }).andThenConsume(fut ->setFragment(helloFragment, true));
+        }).thenConsume(
+                fut -> {
+                    robotHelper.releaseAbilities();
+                    if (!fut.hasError()) {
+                        HelloFragment helloFragment = new HelloFragment();
+                        helloFragment.setPeopleName(location);
+                        setFragment(helloFragment, true);
+                    }
+                });
     }
 
 

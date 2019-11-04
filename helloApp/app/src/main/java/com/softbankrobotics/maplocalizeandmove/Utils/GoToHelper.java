@@ -113,8 +113,6 @@ public class GoToHelper {
             .andThenCompose(goTo -> tryGoTo(goTo)).andThenCompose(
             gotoFut -> NavUtils.alignWithFrame(qiContext, frame));
         });
-        toRet.andThenConsume(
-                alignFut-> NavUtils.stayAtPoseFor(qiContext, 10));
         return toRet;
     }
 

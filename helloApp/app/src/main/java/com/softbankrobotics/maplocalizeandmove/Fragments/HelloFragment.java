@@ -3,8 +3,6 @@ package com.softbankrobotics.maplocalizeandmove.Fragments;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.PictureDrawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Log;
@@ -12,7 +10,6 @@ import android.view.ContextThemeWrapper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -22,7 +19,6 @@ import com.aldebaran.qi.sdk.object.humanawareness.HumanAwareness;
 import com.aldebaran.qi.sdk.util.FutureUtils;
 import com.softbankrobotics.maplocalizeandmove.MainActivity;
 import com.softbankrobotics.maplocalizeandmove.R;
-import com.softbankrobotics.maplocalizeandmove.Utils.Popup;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -30,17 +26,22 @@ import java.util.concurrent.TimeUnit;
 
 import static android.support.constraint.Constraints.TAG;
 
+
+
 public class HelloFragment extends android.support.v4.app.Fragment {
+
     private MainActivity ma;
     private View localView;
     public HumanAwareness humanAwareness;
     TextView textView;
-    Boolean humanDetected;
 
+    Boolean humanDetected;
     String humanName = "human";
     String errorValue = "";
     Boolean hasError = false;
+
     Bitmap pictureBitmap;
+
 
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container,
                              Bundle savedInstanceState) {
@@ -74,7 +75,6 @@ public class HelloFragment extends android.support.v4.app.Fragment {
     }
 
     public void lookAtPeople() {
-
         if (hasError == true) {
             ma.runOnUiThread(() -> textView.setText("Error goto " + errorValue));
             return;
@@ -82,6 +82,15 @@ public class HelloFragment extends android.support.v4.app.Fragment {
         Future<Void> animationFuture = ma.robotHelper.animationTosearchPeople();
         Log.d("HELLOFRAGMENT", "lookAtPeople");
         humanDetected = false;
+        if (humanAwareness.getHumansAround().size() > 0) {
+            animationFuture.requestCancellation();
+            ma.say("hello " + humanName + "!");
+            Log.d("HELLOFRAGMENT", "detected people");
+            ma.runOnUiThread(() -> textView.setText("Hello " + humanName + " ! "));
+            ma.runOnUiThread(() -> setPicture(ma.pictureData));
+            humanDetected = true;
+            return;
+        }
         humanAwareness.addOnHumansAroundChangedListener(result -> {
             Future<List<Human>> humansAroundFuture = humanAwareness.async().getHumansAround();
             humansAroundFuture.andThenConsume(humansAround -> {
@@ -100,7 +109,6 @@ public class HelloFragment extends android.support.v4.app.Fragment {
             if (humanDetected == false) {
                 ma.say("no one ...");
             }
-            ma.robotHelper.holdAbilities();
             humanAwareness.removeAllOnHumansAroundChangedListeners();});
     }
 
@@ -126,3 +134,4 @@ public class HelloFragment extends android.support.v4.app.Fragment {
         imageView.setImageBitmap(pictureBitmap);
     }
 }
+
