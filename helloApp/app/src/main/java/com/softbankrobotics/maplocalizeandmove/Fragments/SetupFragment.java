@@ -36,7 +36,7 @@ public class SetupFragment extends android.support.v4.app.Fragment {
             }else{
                 return inflater.inflate(fragmentId, container, false);
             }
-        }else{
+        } else {
             Log.e(TAG, "could not get mainActivity, can't create fragment");
             return null;
         }

@@ -83,16 +83,6 @@ public class HelloFragment extends android.support.v4.app.Fragment {
         Log.d("HELLOFRAGMENT", "lookAtPeople");
         humanDetected = false;
         humanAwareness.async().getHumansAround().andThenConsume(res -> {
-            if (res.size() >0) {
-                animationFuture.requestCancellation();
-                ma.say("hello " + humanName + "!");
-                Log.d("HELLOFRAGMENT", "detected people");
-                ma.runOnUiThread(() -> textView.setText("Hello " + humanName + " ! "));
-                ma.runOnUiThread(() -> setPicture(ma.pictureData));
-                humanDetected = true;
-                return;
-        }
-
             humanAwareness.addOnHumansAroundChangedListener(result -> {
                 Future<List<Human>> humansAroundFuture = humanAwareness.async().getHumansAround();
                 humansAroundFuture.andThenConsume(humansAround -> {
@@ -107,8 +97,17 @@ public class HelloFragment extends android.support.v4.app.Fragment {
                     humanAwareness.removeAllOnHumansAroundChangedListeners();
                 });
             });
+            if (res.size() > 0) {
+                humanAwareness.removeAllOnHumansAroundChangedListeners();
+                animationFuture.requestCancellation();
+                ma.say("hello " + humanName + "!");
+                Log.d("HELLOFRAGMENT", "detected people");
+                ma.runOnUiThread(() -> textView.setText("Hello " + humanName + " ! "));
+                ma.runOnUiThread(() -> setPicture(ma.pictureData));
+                humanDetected = true;
+                return;
+            }
         });
-
         FutureUtils.wait((long) 30, TimeUnit.SECONDS).andThenConsume(fut ->{
             if (humanDetected == false) {
                 ma.say("no one ...");

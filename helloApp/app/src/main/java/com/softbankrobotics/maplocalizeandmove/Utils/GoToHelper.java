@@ -38,6 +38,7 @@ public class GoToHelper {
     private List<onFinishedMovingListener> finishedListeners;
     private static String TAG = "MSI_GoToHelper";
     private static int MAXTRIES = 5;
+    private Future<Void> gotoFuture;
     /**
      * Constructor: call me in your `onCreate`
      */
@@ -91,6 +92,10 @@ public class GoToHelper {
     }
 
 
+    public void cancelGoTo() {
+        gotoFuture.requestCancellation();
+    }
+
     /**
      * Call this function for the robot to go to the provided Frame.
      * The robot will try up to 5 times to reach the destination.
@@ -104,8 +109,7 @@ public class GoToHelper {
         raiseStartedMoving();
         // Build the GoTo
         Log.d(TAG, "goTo  frame before");
-
-        Future<Void> toRet =  NavUtils.alignWithTarget(qiContext, frame).thenCompose(unusued -> {
+        gotoFuture = NavUtils.alignWithTarget(qiContext, frame).thenCompose(unusued -> {
             Log.d(TAG, "alignWithFrame: " + unusued.getValue());
             return GoToBuilder.with(qiContext)
             .withFrame(frame)
@@ -113,7 +117,7 @@ public class GoToHelper {
             .andThenCompose(goTo -> tryGoTo(goTo)).andThenCompose(
             gotoFut -> NavUtils.alignWithFrame(qiContext, frame));
         });
-        return toRet;
+        return gotoFuture;
     }
 
     /**

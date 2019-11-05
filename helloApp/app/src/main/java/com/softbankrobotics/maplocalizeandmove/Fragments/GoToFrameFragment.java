@@ -28,6 +28,7 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import static android.support.constraint.Constraints.TAG;
 
@@ -75,6 +76,7 @@ public class GoToFrameFragment extends android.support.v4.app.Fragment {
                     ma.robotHelper.holdAbilities();
                     ma.setFragment(new ProductionFragment(), true);
                 });
+        ma.robotHelper.releaseAbilities();
         displayLocations();
     }
 
@@ -86,7 +88,9 @@ public class GoToFrameFragment extends android.support.v4.app.Fragment {
         cross = goToPopup.inflator.findViewById(R.id.cross);
         Button close_button = goToPopup.inflator.findViewById(R.id.close_button);
         close_button.setOnClickListener((v) -> {
+            ma.robotHelper.goToHelper.cancelGoTo();
             goToPopup.dialog.hide();
+            ma.robotHelper.releaseAbilities();
         });
     }
 
