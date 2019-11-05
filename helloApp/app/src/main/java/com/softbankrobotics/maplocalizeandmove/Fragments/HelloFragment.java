@@ -71,7 +71,7 @@ public class HelloFragment extends android.support.v4.app.Fragment {
         hasError = false;
         localView.findViewById(R.id.back_button).setOnClickListener(
                 (v) -> ma.setFragment(new GoToFrameFragment(),false));
-        ma.robotHelper.releaseAbilities().andThenConsume(fut -> lookAtPeople());
+        lookAtPeople();
     }
 
     public void lookAtPeople() {
@@ -82,29 +82,33 @@ public class HelloFragment extends android.support.v4.app.Fragment {
         Future<Void> animationFuture = ma.robotHelper.animationTosearchPeople();
         Log.d("HELLOFRAGMENT", "lookAtPeople");
         humanDetected = false;
-        if (humanAwareness.getHumansAround().size() > 0) {
-            animationFuture.requestCancellation();
-            ma.say("hello " + humanName + "!");
-            Log.d("HELLOFRAGMENT", "detected people");
-            ma.runOnUiThread(() -> textView.setText("Hello " + humanName + " ! "));
-            ma.runOnUiThread(() -> setPicture(ma.pictureData));
-            humanDetected = true;
-            return;
+        humanAwareness.async().getHumansAround().andThenConsume(res -> {
+            if (res.size() >0) {
+                animationFuture.requestCancellation();
+                ma.say("hello " + humanName + "!");
+                Log.d("HELLOFRAGMENT", "detected people");
+                ma.runOnUiThread(() -> textView.setText("Hello " + humanName + " ! "));
+                ma.runOnUiThread(() -> setPicture(ma.pictureData));
+                humanDetected = true;
+                return;
         }
-        humanAwareness.addOnHumansAroundChangedListener(result -> {
-            Future<List<Human>> humansAroundFuture = humanAwareness.async().getHumansAround();
-            humansAroundFuture.andThenConsume(humansAround -> {
-                if (humansAround.size() > 0) {
-                    animationFuture.requestCancellation();
-                    ma.say("hello " + humanName + "!");
-                    Log.d("HELLOFRAGMENT", "detected people");
-                    ma.runOnUiThread(() -> textView.setText("Hello " + humanName + " ! "));
-                    ma.runOnUiThread(() -> setPicture(ma.pictureData));
-                    humanDetected = true;
-                }
-                humanAwareness.removeAllOnHumansAroundChangedListeners();
+
+            humanAwareness.addOnHumansAroundChangedListener(result -> {
+                Future<List<Human>> humansAroundFuture = humanAwareness.async().getHumansAround();
+                humansAroundFuture.andThenConsume(humansAround -> {
+                    if (humansAround.size() > 0) {
+                        animationFuture.requestCancellation();
+                        ma.say("hello " + humanName + "!");
+                        Log.d("HELLOFRAGMENT", "detected people");
+                        ma.runOnUiThread(() -> textView.setText("Hello " + humanName + " ! "));
+                        ma.runOnUiThread(() -> setPicture(ma.pictureData));
+                        humanDetected = true;
+                    }
+                    humanAwareness.removeAllOnHumansAroundChangedListeners();
+                });
             });
         });
+
         FutureUtils.wait((long) 30, TimeUnit.SECONDS).andThenConsume(fut ->{
             if (humanDetected == false) {
                 ma.say("no one ...");
@@ -114,11 +118,6 @@ public class HelloFragment extends android.support.v4.app.Fragment {
 
     public void setPeopleName(String value)  {
         humanName = value;
-    }
-
-    public void setError(String value)  {
-        hasError = true;
-        errorValue = value;
     }
 
     private void setPicture(ByteBuffer data)

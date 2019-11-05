@@ -71,10 +71,10 @@ public class GoToFrameFragment extends android.support.v4.app.Fragment {
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         localView = view;
-        view.findViewById(R.id.back_button).setOnClickListener((v) ->
-                ma.setFragment(new ProductionFragment(), true));
-
-        ma.robotHelper.releaseAbilities();
+        view.findViewById(R.id.back_button).setOnClickListener((v) -> {
+                    ma.robotHelper.holdAbilities();
+                    ma.setFragment(new ProductionFragment(), true);
+                });
         displayLocations();
     }
 
@@ -91,6 +91,7 @@ public class GoToFrameFragment extends android.support.v4.app.Fragment {
     }
 
     private void displayLocations() {
+        ma.robotHelper.releaseAbilities();
         Log.d(TAG, "displayLocations: started");
         if (ma.savedLocations.isEmpty()) {
             try {

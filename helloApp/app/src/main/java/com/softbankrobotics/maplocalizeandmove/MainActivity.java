@@ -91,8 +91,7 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
         Log.d(TAG, "onRobotFocusedGained");
         this.qiContext = qiContext;
         robotHelper.onRobotFocusGained(qiContext);
-        robotHelper.holdAbilities().andThenConsume(aVoid -> {
-            Animation animation = AnimationBuilder.with(qiContext) // Create the builder with the context.
+        Animation animation = AnimationBuilder.with(qiContext) // Create the builder with the context.
                     .withResources(R.raw.idle) // Set the animation resource.
                     .build(); // Build the animation.
 
@@ -100,7 +99,7 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
                     .withAnimation(animation) // Set the animation.
                     .build();
             animate.async().run();
-        });
+
         runOnUiThread(() -> setFragment(new MainFragment(), false));
     }
 
@@ -182,11 +181,13 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
         GoToFrameFragment goToFrameFragment = (GoToFrameFragment) getFragment();
         goToFrameFragment.createGoToPopup();
         robotHelper.goToHelper.addOnStartedMovingListener(() -> runOnUiThread(() -> {
+            robotHelper.holdAbilities();
             goToFrameFragment.goToPopup.dialog.show();
             goToFrameFragment.goToPopup.dialog.getWindow().setAttributes(goToFrameFragment.goToPopup.lp);
         }));
 
         robotHelper.goToHelper.addOnFinishedMovingListener((success) -> {
+            robotHelper.releaseAbilities();
             runOnUiThread(() -> {
                 goToFrameFragment.goto_loader.setVisibility(View.GONE);
                 if (success) {
@@ -208,7 +209,6 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
 
         Future<TimestampedImageHandle> imageFuture = robotHelper.goToHelper.takePicture();
         imageFuture.andThenCompose(fut -> {
-            robotHelper.holdAbilities();
             pictureData = fut.getImage().getValue().getData();
             goToFrameFragment.setPicture(fut.getImage().getValue().getData());
             Log.d(TAG, "ok setpictures");
@@ -230,7 +230,6 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
             }
         }).thenConsume(
                 fut -> {
-                    robotHelper.releaseAbilities();
                     if (!fut.hasError()) {
                         HelloFragment helloFragment = new HelloFragment();
                         helloFragment.setPeopleName(location);
@@ -248,39 +247,38 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
     }
 
     public Future<Boolean> loadLocations() {
-        return robotHelper.releaseAbilities().andThenCompose(aVoid -> {
-            return FutureUtils.futureOf((f) -> {
-            // Read file into a temporary hashmap
-            File file = new File(getFilesDir(), "hashmap.ser");
-            if (file.exists()) {
+        return FutureUtils.futureOf((f) -> {
+        // Read file into a temporary hashmap
+        File file = new File(getFilesDir(), "hashmap.ser");
+        if (file.exists()) {
 
-                Map<String, vector2Theta> vectors = saveFileHelper.getLocationsFromFile(getApplicationContext());
+            Map<String, vector2Theta> vectors = saveFileHelper.getLocationsFromFile(getApplicationContext());
 
-                // Clear current savedLocations
-                savedLocations = new HashMap<>();
-                Frame mapFrame = robotHelper.getMapFrame();
+            // Clear current savedLocations
+            savedLocations = new HashMap<>();
+            Frame mapFrame = robotHelper.getMapFrame();
 
-                // Build frames from the vectors
-                for (Map.Entry<String, vector2Theta> entry : vectors.entrySet()) {
-                    // Create a transform from the vector2
-                    Transform t = entry.getValue().createTransform();
-                    Log.d(TAG, "loadLocations: " + entry.getKey());
+            // Build frames from the vectors
+            for (Map.Entry<String, vector2Theta> entry : vectors.entrySet()) {
+                // Create a transform from the vector2
+                Transform t = entry.getValue().createTransform();
+                Log.d(TAG, "loadLocations: " + entry.getKey());
 
-                    // Create an AttachedFrame representing the current robot frame relatively to the MapFrame
-                    AttachedFrame attachedFrame = mapFrame.async().makeAttachedFrame(t).getValue();
+                // Create an AttachedFrame representing the current robot frame relatively to the MapFrame
+                AttachedFrame attachedFrame = mapFrame.async().makeAttachedFrame(t).getValue();
 
-                    // Store the FreeFrame.
-                    savedLocations.put(entry.getKey(), attachedFrame);
-                    load_location_success.set(true);
-                }
-
-                Log.d(TAG, "loadLocations: Done");
-                if (load_location_success.get()) return Future.of(true);
-                else throw new Exception("Empty file");
-            } else {
-                throw new Exception("No file");
+                // Store the FreeFrame.
+                savedLocations.put(entry.getKey(), attachedFrame);
+                load_location_success.set(true);
             }
-        });});
+
+            Log.d(TAG, "loadLocations: Done");
+            if (load_location_success.get()) return Future.of(true);
+            else throw new Exception("Empty file");
+        } else {
+            throw new Exception("No file");
+        }
+        });
     }
 
     public void backupLocations() {
