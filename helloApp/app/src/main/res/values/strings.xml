@@ -36,6 +36,7 @@
     <!-- fragment_save_locations -->
     <string name="SaveLocationFragment">Let\'s save points of interest</string>
     <string name="BackupLocations">Save Locations</string>
+    <string name="letsGoButton">Let\'s go!</string>
 
     <!-- fragment_save_frame -->
     <string name="map_position">Open my hatch then place me where you want me to pass / go</string>

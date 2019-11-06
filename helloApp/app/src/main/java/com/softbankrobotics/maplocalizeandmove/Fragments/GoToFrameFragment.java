@@ -1,8 +1,5 @@
 package com.softbankrobotics.maplocalizeandmove.Fragments;
 
-import android.app.ActionBar;
-import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -16,10 +13,12 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.airbnb.lottie.LottieAnimationView;
+import com.aldebaran.qi.sdk.util.FutureUtils;
+import com.aldebaran.qi.Future;
+
 import com.softbankrobotics.maplocalizeandmove.MainActivity;
 import com.softbankrobotics.maplocalizeandmove.R;
 import com.softbankrobotics.maplocalizeandmove.Utils.Popup;
@@ -28,7 +27,7 @@ import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 import static android.support.constraint.Constraints.TAG;
 
@@ -43,8 +42,8 @@ public class GoToFrameFragment extends android.support.v4.app.Fragment {
     public ImageView cross;
     public LottieAnimationView goto_loader;
     Bitmap pictureBitmap;
-
-
+    Button startGo;
+    Future<Void> waitFut;
     /**
      * inflates the layout associated with this fragment
      * if an application theme is set it will be applied to this fragment.
@@ -72,6 +71,7 @@ public class GoToFrameFragment extends android.support.v4.app.Fragment {
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         localView = view;
+        startGo = localView.findViewById(R.id.buttonStartGoTo);
         view.findViewById(R.id.back_button).setOnClickListener((v) -> {
                     ma.robotHelper.holdAbilities();
                     ma.setFragment(new ProductionFragment(), true);
@@ -171,10 +171,35 @@ public class GoToFrameFragment extends android.support.v4.app.Fragment {
         ma.runOnUiThread(()-> imageView.setImageBitmap(pictureBitmap));
     }
 
+
+
+    public Future<Void> waitForGoButtonClicked() {
+        ma.runOnUiThread(()-> startGo.setVisibility(View.VISIBLE));
+        waitFut = FutureUtils.wait((long) 10, TimeUnit.SECONDS)
+                .thenCompose(fut -> {
+                    if (fut.isCancelled()) {
+                        return Future.of(null);
+                    }
+                    return com.aldebaran.qi.Future.fromError("validation taking too much time," +
+                            " abandon of goTo");
+                });
+        startGo.setOnClickListener((v) -> {
+            Log.i(TAG, "yay gobutton");
+            waitFut.requestCancellation();
+        });
+        return waitFut;
+    }
+    public void cancelValidation() {
+        ma.runOnUiThread(()-> {
+            startGo.setVisibility(View.INVISIBLE);
+            removePicture();
+           waitFut = Future.fromError("abort picture");
+        });
+    }
+
     public void removePicture()
     {
         ImageView imageView =  (ImageView)localView.findViewById(R.id.userPicture);
-        ma.runOnUiThread(()-> imageView.setVisibility(View.INVISIBLE));
+        ma.runOnUiThread(()-> imageView.setImageResource(R.drawable.ic_launcher2_background));
     }
-
 }

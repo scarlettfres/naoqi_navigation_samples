@@ -179,8 +179,10 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
     public void goToLocation(final String location) {
         say("Let's go to "+location+"!!");
         GoToFrameFragment goToFrameFragment = (GoToFrameFragment) getFragment();
+        goToFrameFragment.cancelValidation();
         goToFrameFragment.createGoToPopup();
         robotHelper.goToHelper.addOnStartedMovingListener(() -> runOnUiThread(() -> {
+            Log.d(TAG, "holdAbilities");
             robotHelper.holdAbilities();
             goToFrameFragment.goToPopup.dialog.show();
             goToFrameFragment.goToPopup.dialog.getWindow().setAttributes(goToFrameFragment.goToPopup.lp);
@@ -188,6 +190,7 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
 
         robotHelper.goToHelper.addOnFinishedMovingListener((success) -> {
             robotHelper.releaseAbilities();
+            Log.d(TAG, "addOnFinishedMovingListener");
             runOnUiThread(() -> {
                 goToFrameFragment.goto_loader.setVisibility(View.GONE);
                 if (success) {
@@ -212,23 +215,28 @@ public class MainActivity extends RobotActivity implements RobotLifecycleCallbac
             pictureData = fut.getImage().getValue().getData();
             goToFrameFragment.setPicture(fut.getImage().getValue().getData());
             Log.d(TAG, "ok setpictures");
+            return goToFrameFragment.waitForGoButtonClicked();}).thenCompose(futCliked -> {
+                Log.d(TAG, "goToFrameFragment.waitForGoButtonClicked() then ");
 
-            if (location.equalsIgnoreCase("mapFrame")) {
-                          Log.d(TAG, "end of go to succeeded");
-                          return qiContext.getMapping()
-                                    .async()
-                                    // ...get the mapFrame
-                                    .mapFrame()
-                                    // ...and go to it!
-                                    .andThenCompose(frame ->  robotHelper.goToHelper.goTo(frame)).andThenConsume(futGoto ->
-                                    Log.d(TAG, "end of go to map succeeded"));
-            } else {
-                return robotHelper.goToHelper.goTo(savedLocations.get(location)).andThenConsume(futGoto -> {
-                            Log.d(TAG, "end of go to succeeded");
-                        }
-                );
-            }
-        }).thenConsume(
+                if (futCliked.hasError()) {
+                    return Future.fromError(futCliked.getErrorMessage());
+                } else {
+                    Log.d(TAG, "else ");
+                    if (location.equalsIgnoreCase("mapFrame")) {
+                        return qiContext.getMapping()
+                                .async()
+                                // ...get the mapFrame
+                                .mapFrame()
+                                // ...and go to it!
+                                .andThenCompose(frame ->  robotHelper.goToHelper.goTo(frame)).andThenConsume(futGoto ->
+                                        Log.d(TAG, "end of go to map succeeded"));
+                    } else {
+                        return robotHelper.goToHelper.goTo(savedLocations.get(location)).andThenConsume(futGoto -> {
+                                    Log.d(TAG, "end of go to succeeded");
+                                }
+                        );
+                    }
+                }}).thenConsume(
                 fut -> {
                     if (!fut.hasError()) {
                         HelloFragment helloFragment = new HelloFragment();
